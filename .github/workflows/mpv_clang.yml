@@ -38,7 +38,7 @@ jobs:
     env:
       BIT: ${{ matrix.bit }}
     container:
-      image: docker://ghcr.io/shinchiro/archlinux@sha256:25b118ade24db8f5b9a3a1542b5cadd38c03b36f245a71cadce07ed3b74ae65b # pinned: last image that builds with the 2023 ExternalProject patch (Kwickflix run 34259130162, 2026-09-08)
+      image: docker://ghcr.io/shinchiro/archlinux:latest
     outputs:
       mpv_ver: ${{ steps.build_mpv_step.outputs.mpv_ver }}
     steps:
