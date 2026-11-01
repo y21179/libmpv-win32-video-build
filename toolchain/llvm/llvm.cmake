@@ -6,6 +6,7 @@ ExternalProject_Add(llvm
     UPDATE_COMMAND ""
     GIT_REMOTE_NAME origin
     GIT_TAG release/17.x
+    PATCH_COMMAND ${EXEC} git am --3way ${CMAKE_CURRENT_SOURCE_DIR}/llvm-0001-fix-missing-vector-include.patch
     LIST_SEPARATOR ,
     CONFIGURE_COMMAND ${EXEC} CONF=1 cmake -H<SOURCE_DIR>/llvm -B<BINARY_DIR>
         -G Ninja
