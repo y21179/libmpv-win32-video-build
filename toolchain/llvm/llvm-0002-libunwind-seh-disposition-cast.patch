@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: y21179 <y21179@users.noreply.github.com>
+Subject: [PATCH] libunwind: cast ExceptionExecuteHandler to EXCEPTION_DISPOSITION
+
+Matches upstream main; newer mingw-w64 headers made the bare literal an
+enum conversion error.
+
+---
+index b2bb119..2cfb7b3 100644
+--- a/libunwind/src/Unwind-seh.cpp
++++ b/libunwind/src/Unwind-seh.cpp
+@@ -137,7 +137,7 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
+     // If we were called by __libunwind_seh_personality(), indicate that
+     // a handler was found; otherwise, initiate phase 2 by unwinding.
+     if (ours && ms_exc->NumberParameters > 1)
+-      return 4 /* ExceptionExecuteHandler in mingw */;
++      return static_cast<EXCEPTION_DISPOSITION>(4);
+     // This should never happen in phase 2.
+     if (IS_UNWINDING(ms_exc->ExceptionFlags))
+       _LIBUNWIND_ABORT("Personality indicated exception handler in phase 2!");
+@@ -155,7 +155,7 @@ _GCC_specific_handler(PEXCEPTION_RECORD ms_exc, PVOID frame, PCONTEXT ms_ctx,
+     // a handler was found; otherwise, it's time to initiate a collided
+     // unwind to the target.
+     if (ours && !IS_UNWINDING(ms_exc->ExceptionFlags) && ms_exc->NumberParameters > 1)
+-      return 4 /* ExceptionExecuteHandler in mingw */;
++      return static_cast<EXCEPTION_DISPOSITION>(4);
+     // This should never happen in phase 1.
+     if (!IS_UNWINDING(ms_exc->ExceptionFlags))
+       _LIBUNWIND_ABORT("Personality installed context during phase 1!");
