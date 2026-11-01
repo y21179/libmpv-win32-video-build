@@ -2,6 +2,7 @@ ExternalProject_Add(libvpl
     GIT_REPOSITORY https://github.com/oneapi-src/oneVPL.git
     SOURCE_DIR ${SOURCE_LOCATION}
     GIT_CLONE_FLAGS "--filter=tree:0"
+    GIT_TAG main
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ${EXEC} CONF=1 cmake -H<SOURCE_DIR> -B<BINARY_DIR>
         -G Ninja
