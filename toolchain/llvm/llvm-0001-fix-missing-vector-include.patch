@@ -1,0 +1,13 @@
+From: y21179 <y21179@users.noreply.github.com>
+Subject: [PATCH] add missing <vector> include (build fails with libc++)
+
+--- a/clang/include/clang/Tooling/Inclusions/StandardLibrary.h
++++ b/clang/include/clang/Tooling/Inclusions/StandardLibrary.h
+@@ -12,6 +12,7 @@
+ #include "clang/Basic/LLVM.h"
+ #include "llvm/ADT/StringRef.h"
+ #include "llvm/Support/Compiler.h"
++#include <vector>
+ 
+ #include <optional>
+ #include <string>
