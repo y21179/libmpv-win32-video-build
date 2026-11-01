@@ -164,6 +164,7 @@ ExternalProject_Add(ffmpeg
         --enable-decoder=dvdsub
         --enable-decoder=srt
         --enable-decoder=stl
+        --enable-decoder=pgssub
         --enable-decoder=subrip
         --enable-decoder=subviewer
         --enable-decoder=subviewer1
