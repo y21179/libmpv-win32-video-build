@@ -1,23 +1,23 @@
-From fb6cb98928fd783e11d011bae8ab563a6d8e9803 Mon Sep 17 00:00:00 2001
-From: shinchiro <shinchiro@users.noreply.github.com>
-Date: Wed, 29 Nov 2023 17:38:59 +0800
+From cb9f8e2534dd751b5a1a5ab3ecfd3477eeb19618 Mon Sep 17 00:00:00 2001
+From: y21179 <y21179@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 08:02:32 +0800
 Subject: [PATCH] loader: cross-compile & static linking hacks
 
 ---
- loader/CMakeLists.txt       | 24 ++++++------------------
+ loader/CMakeLists.txt       | 25 +++++++------------------
  loader/loader.h             |  2 ++
  loader/loader.rc.in         |  4 ++++
  loader/loader_windows.c     |  2 ++
  loader/vk_loader_platform.h |  9 +++------
  loader/vulkan_own.pc.in     | 11 +++++++++++
- 6 files changed, 28 insertions(+), 24 deletions(-)
+ 6 files changed, 29 insertions(+), 24 deletions(-)
  create mode 100644 loader/vulkan_own.pc.in
 
 diff --git a/loader/CMakeLists.txt b/loader/CMakeLists.txt
-index 39f4f6cf5..fa188322b 100644
+index 5957081b..2530898d 100644
 --- a/loader/CMakeLists.txt
 +++ b/loader/CMakeLists.txt
-@@ -21,8 +21,9 @@ include(CheckIncludeFile)
+@@ -22,8 +22,9 @@ include(CheckIncludeFile)
  add_library(loader_specific_options INTERFACE)
  target_link_libraries(loader_specific_options INTERFACE loader_common_options Vulkan::Headers)
  target_include_directories(loader_specific_options INTERFACE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/generated ${CMAKE_CURRENT_BINARY_DIR})
@@ -28,17 +28,26 @@ index 39f4f6cf5..fa188322b 100644
  
      if(ENABLE_WIN10_ONECORE)
          # Note: When linking your app or driver to OneCore.lib, be sure to remove any links to non-umbrella libs (such as
-@@ -311,7 +312,7 @@ if(USE_ASSEMBLY_FALLBACK)
-     endif()
+@@ -92,7 +93,7 @@ set(NORMAL_LOADER_SRCS
+     wsi.h
+     )
+ 
+-if(WIN32)
++if(WIN32 AND NOT MINGW)
+     list(APPEND NORMAL_LOADER_SRCS loader_windows.c dirent_on_windows.c)
+ elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
+     list(APPEND NORMAL_LOADER_SRCS loader_linux.c)
+@@ -377,7 +378,7 @@ if(UNKNOWN_FUNCTIONS_SUPPORTED)
+     list(APPEND NORMAL_LOADER_SRCS ${OPT_LOADER_SRCS})
  endif()
  
 -if(WIN32)
-+if(MSVC)
-     add_library(loader-opt STATIC ${OPT_LOADER_SRCS})
-     target_link_libraries(loader-opt PUBLIC loader_specific_options)
-     add_dependencies(loader-opt loader_asm_gen_files)
-@@ -357,21 +358,8 @@ if(WIN32)
-     add_dependencies(vulkan loader_asm_gen_files)
++if(WIN32 AND NOT MINGW)
+     # If BUILD_DLL_VERSIONINFO was set, use the loader.rc in the build dir, otherwise use the checked in file
+     set(RC_FILE_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/loader.rc)
+     if (NOT "$CACHE{BUILD_DLL_VERSIONINFO}" STREQUAL "")
+@@ -417,20 +418,8 @@ if(WIN32)
+     endif()
  
  else()
 -    if(APPLE)
@@ -55,15 +64,14 @@ index 39f4f6cf5..fa188322b 100644
 -    else()
 -        add_library(vulkan SHARED)
 -    endif()
--
 +    add_library(vulkan STATIC)
 +    target_compile_definitions(vulkan PRIVATE BUILD_STATIC_LOADER)
-     target_sources(vulkan PRIVATE ${NORMAL_LOADER_SRCS} ${OPT_LOADER_SRCS})
  
-     add_dependencies(vulkan loader_asm_gen_files)
-@@ -464,7 +452,7 @@ endif()
- target_link_libraries(vulkan PRIVATE Vulkan::Headers)
- add_library(Vulkan::Loader ALIAS vulkan)
+     target_sources(vulkan PRIVATE ${NORMAL_LOADER_SRCS})
+ 
+@@ -542,7 +531,7 @@ if (BUILD_TESTS)
+     target_compile_definitions(vulkan PRIVATE SHOULD_EXPORT_TEST_FUNCTIONS)
+ endif()
  
 -if (APPLE_STATIC_LOADER)
 +if (BUILD_STATIC_LOADER)
@@ -71,7 +79,7 @@ index 39f4f6cf5..fa188322b 100644
      message(NOTICE "Apple STATIC lib: it will be built but not installed, and vulkan.pc and VulkanLoaderConfig.cmake won't be generated!")
      return()
 diff --git a/loader/loader.h b/loader/loader.h
-index 6bd7115f4..90a441306 100644
+index 1ca9d456..276b9b73 100644
 --- a/loader/loader.h
 +++ b/loader/loader.h
 @@ -33,7 +33,9 @@
@@ -83,9 +91,9 @@ index 6bd7115f4..90a441306 100644
 +#endif
  
  static inline VkPhysicalDevice loader_unwrap_physical_device(VkPhysicalDevice physicalDevice) {
-     struct loader_physical_device_tramp *phys_dev = (struct loader_physical_device_tramp *)physicalDevice;
+     if (VK_NULL_HANDLE == physicalDevice) {
 diff --git a/loader/loader.rc.in b/loader/loader.rc.in
-index 0dc4227da..e7fcea06f 100644
+index 0dc4227d..e7fcea06 100644
 --- a/loader/loader.rc.in
 +++ b/loader/loader.rc.in
 @@ -19,7 +19,11 @@
@@ -101,37 +109,36 @@ index 0dc4227da..e7fcea06f 100644
  // All set through CMake
  #define VER_FILE_VERSION ${LOADER_VER_FILE_VERSION}
 diff --git a/loader/loader_windows.c b/loader/loader_windows.c
-index 5b0dfb0da..de6942a32 100644
+index 8ce598c3..163f1ada 100644
 --- a/loader/loader_windows.c
 +++ b/loader/loader_windows.c
-@@ -95,6 +95,7 @@ void windows_initialization(void) {
+@@ -98,6 +98,7 @@ void windows_initialization(void) {
  #endif
  }
  
 +#if defined(LOADER_DYNAMIC_LIB)
- BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved) {
-     (void)hinst;
+ BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID reserved) {
+     (void)hinstance;
      switch (reason) {
-@@ -112,6 +113,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved) {
+@@ -118,6 +119,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID reserved) {
      }
      return TRUE;
  }
 +#endif
  
- bool windows_add_json_entry(const struct loader_instance *inst,
-                             char **reg_data,    // list of JSON files
+ VkResult windows_add_json_entry(const struct loader_instance *inst, struct loader_string_list *search_paths,
+                                 LPCSTR key_name,  // key name - used for debug prints - i.e. VulkanDriverName
 diff --git a/loader/vk_loader_platform.h b/loader/vk_loader_platform.h
-index afb0f5634..72a908a0f 100644
+index f232880c..c7aac8be 100644
 --- a/loader/vk_loader_platform.h
 +++ b/loader/vk_loader_platform.h
-@@ -69,15 +69,12 @@
+@@ -71,14 +71,11 @@
  #include <io.h>
  #include <shlwapi.h>
  #include <direct.h>
 +#include <pthread.h> // for mingw
- #endif  // defined(_WIN32)
  
- #include "stack_allocation.h"
+ #endif  // defined(_WIN32)
  
 -#if defined(APPLE_STATIC_LOADER) && !defined(__APPLE__)
 -#error "APPLE_STATIC_LOADER can only be defined on Apple platforms!"
@@ -142,9 +149,9 @@ index afb0f5634..72a908a0f 100644
  #define LOADER_EXPORT
  #elif defined(__GNUC__) && __GNUC__ >= 4
  #define LOADER_EXPORT __attribute__((visibility("default")))
-@@ -226,7 +223,7 @@ static inline bool loader_platform_is_path(const char *path) { return strchr(pat
- // resources allocated by anything allocated by once init. This isn't a problem for static libraries, but it is for dynamic
- // ones. When building a DLL, we use DllMain() instead to allow properly cleaning up resources.
+@@ -256,7 +253,7 @@ static inline bool loader_platform_is_path(const char *path) { return strchr(pat
+ // API call made, using InitOnceExecuteOnce, except for initialization primitives which must be done in DllMain. This is because
+ // there is no way to clean up the resources allocated by anything allocated by once init.
  
 -#if defined(APPLE_STATIC_LOADER)
 +#if defined(BUILD_STATIC_LOADER)
@@ -153,7 +160,7 @@ index afb0f5634..72a908a0f 100644
      assert(ctl != NULL);
 diff --git a/loader/vulkan_own.pc.in b/loader/vulkan_own.pc.in
 new file mode 100644
-index 000000000..ed2f30bb2
+index 00000000..ed2f30bb
 --- /dev/null
 +++ b/loader/vulkan_own.pc.in
 @@ -0,0 +1,11 @@
@@ -169,5 +176,5 @@ index 000000000..ed2f30bb2
 +Libs.private: -lshlwapi -lcfgmgr32
 +Cflags: -I${includedir}
 -- 
-2.43.0
+2.52.0.windows.1
 
