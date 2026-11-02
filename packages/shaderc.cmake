@@ -9,6 +9,7 @@ ExternalProject_Add(shaderc
     GIT_TAG main
     GIT_CLONE_FLAGS "--filter=tree:0"
     UPDATE_COMMAND ""
+    PATCH_COMMAND ${EXEC} git am --3way ${CMAKE_CURRENT_SOURCE_DIR}/shaderc-*.patch
     CONFIGURE_COMMAND ${EXEC} LTO_JOB=1 CONF=1 cmake -H<SOURCE_DIR> -B<BINARY_DIR>
         -G Ninja
         -DCMAKE_BUILD_TYPE=Release
