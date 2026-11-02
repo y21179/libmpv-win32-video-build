@@ -19,8 +19,10 @@ elseif(COMPILER_TOOLCHAIN STREQUAL "clang")
     set(mpv_lto_mode "-Db_lto_mode=thin")
     set(mpv_copy_debug COMMAND ${CMAKE_COMMAND} -E copy <BINARY_DIR>/mpv.pdb ${CMAKE_CURRENT_BINARY_DIR}/mpv-debug/mpv.pdb)
     if(CLANG_PACKAGES_LTO)
-        set(cargo_lto_rustflags "CARGO_PROFILE_RELEASE_LTO=thin
-                                 RUSTFLAGS='-C linker-plugin-lto -C embed-bitcode -C lto=thin'")
+        # rustc ships a newer LLVM than our pinned lld, so its ThinLTO bitcode
+        # cannot be read back at link time (ld.lld: Unknown attribute kind (102),
+        # Producer LLVM23.1.1-rust-1.99.1 vs Reader LLVM 17.0.6)
+        set(cargo_lto_rustflags "")
         # ffmpeg ea3d24bb only accepts boolean --enable-lto, which means full LTO
         # (whole-program codegen at the final mpv link); leave ffmpeg out of ThinLTO
         set(ffmpeg_lto "")
