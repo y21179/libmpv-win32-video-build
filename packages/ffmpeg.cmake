@@ -58,6 +58,7 @@ ExternalProject_Add(ffmpeg
         --disable-programs
         --disable-gray
         --disable-swscale-alpha
+        --disable-inline-asm
 
         --enable-bsfs
 
