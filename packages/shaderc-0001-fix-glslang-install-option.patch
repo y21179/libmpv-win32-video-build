@@ -3,6 +3,11 @@ From: github-actions <41898282+github-actions[bot]@users.noreply.github.com>
 Date: Sun, 2 Nov 2026 00:00:00 +0000
 Subject: [PATCH] fix GLSLANG_ENABLE_INSTALL: broken generator expression in set()
 
+diff --git a/third_party/CMakeLists.txt b/third_party/CMakeLists.txt
+index 9e9d8b1..0ddeaab 100644
+--- a/third_party/CMakeLists.txt
++++ b/third_party/CMakeLists.txt
+@@ -92,7 +92,11 @@ if (NOT TARGET glslang)
        # Glslang tests are off by default. Turn them on if testing Shaderc.
        set(GLSLANG_TESTS ON)
      endif()
