@@ -2,8 +2,7 @@ ExternalProject_Add(spirv-headers
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
     SOURCE_DIR ${SOURCE_LOCATION}
     GIT_CLONE_FLAGS "--filter=tree:0"
-    GIT_REMOTE_NAME origin
-    GIT_TAG main
+    GIT_TAG 86f980c731e62ae4eaf383d320449d71687936bf
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
