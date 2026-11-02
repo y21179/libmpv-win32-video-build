@@ -1,20 +1,20 @@
-From cb9f8e2534dd751b5a1a5ab3ecfd3477eeb19618 Mon Sep 17 00:00:00 2001
+From ec8277c8f05e1a39e2ce971aa3a28ed437431bcc Mon Sep 17 00:00:00 2001
 From: y21179 <y21179@users.noreply.github.com>
 Date: Mon, 2 Nov 2026 08:02:32 +0800
 Subject: [PATCH] loader: cross-compile & static linking hacks
 
 ---
- loader/CMakeLists.txt       | 25 +++++++------------------
+ loader/CMakeLists.txt       | 23 ++++++-----------------
  loader/loader.h             |  2 ++
  loader/loader.rc.in         |  4 ++++
  loader/loader_windows.c     |  2 ++
  loader/vk_loader_platform.h |  9 +++------
  loader/vulkan_own.pc.in     | 11 +++++++++++
- 6 files changed, 29 insertions(+), 24 deletions(-)
+ 6 files changed, 28 insertions(+), 23 deletions(-)
  create mode 100644 loader/vulkan_own.pc.in
 
 diff --git a/loader/CMakeLists.txt b/loader/CMakeLists.txt
-index 5957081b..2530898d 100644
+index 5957081..c2f84fd 100644
 --- a/loader/CMakeLists.txt
 +++ b/loader/CMakeLists.txt
 @@ -22,8 +22,9 @@ include(CheckIncludeFile)
@@ -28,15 +28,6 @@ index 5957081b..2530898d 100644
  
      if(ENABLE_WIN10_ONECORE)
          # Note: When linking your app or driver to OneCore.lib, be sure to remove any links to non-umbrella libs (such as
-@@ -92,7 +93,7 @@ set(NORMAL_LOADER_SRCS
-     wsi.h
-     )
- 
--if(WIN32)
-+if(WIN32 AND NOT MINGW)
-     list(APPEND NORMAL_LOADER_SRCS loader_windows.c dirent_on_windows.c)
- elseif(CMAKE_SYSTEM_NAME MATCHES "Linux|BSD|DragonFly|GNU")
-     list(APPEND NORMAL_LOADER_SRCS loader_linux.c)
 @@ -377,7 +378,7 @@ if(UNKNOWN_FUNCTIONS_SUPPORTED)
      list(APPEND NORMAL_LOADER_SRCS ${OPT_LOADER_SRCS})
  endif()
@@ -79,7 +70,7 @@ index 5957081b..2530898d 100644
      message(NOTICE "Apple STATIC lib: it will be built but not installed, and vulkan.pc and VulkanLoaderConfig.cmake won't be generated!")
      return()
 diff --git a/loader/loader.h b/loader/loader.h
-index 1ca9d456..276b9b73 100644
+index 1ca9d45..276b9b7 100644
 --- a/loader/loader.h
 +++ b/loader/loader.h
 @@ -33,7 +33,9 @@
@@ -93,7 +84,7 @@ index 1ca9d456..276b9b73 100644
  static inline VkPhysicalDevice loader_unwrap_physical_device(VkPhysicalDevice physicalDevice) {
      if (VK_NULL_HANDLE == physicalDevice) {
 diff --git a/loader/loader.rc.in b/loader/loader.rc.in
-index 0dc4227d..e7fcea06 100644
+index 0dc4227..e7fcea0 100644
 --- a/loader/loader.rc.in
 +++ b/loader/loader.rc.in
 @@ -19,7 +19,11 @@
@@ -109,7 +100,7 @@ index 0dc4227d..e7fcea06 100644
  // All set through CMake
  #define VER_FILE_VERSION ${LOADER_VER_FILE_VERSION}
 diff --git a/loader/loader_windows.c b/loader/loader_windows.c
-index 8ce598c3..163f1ada 100644
+index 8ce598c..163f1ad 100644
 --- a/loader/loader_windows.c
 +++ b/loader/loader_windows.c
 @@ -98,6 +98,7 @@ void windows_initialization(void) {
@@ -129,7 +120,7 @@ index 8ce598c3..163f1ada 100644
  VkResult windows_add_json_entry(const struct loader_instance *inst, struct loader_string_list *search_paths,
                                  LPCSTR key_name,  // key name - used for debug prints - i.e. VulkanDriverName
 diff --git a/loader/vk_loader_platform.h b/loader/vk_loader_platform.h
-index f232880c..c7aac8be 100644
+index f232880..c7aac8b 100644
 --- a/loader/vk_loader_platform.h
 +++ b/loader/vk_loader_platform.h
 @@ -71,14 +71,11 @@
@@ -160,7 +151,7 @@ index f232880c..c7aac8be 100644
      assert(ctl != NULL);
 diff --git a/loader/vulkan_own.pc.in b/loader/vulkan_own.pc.in
 new file mode 100644
-index 00000000..ed2f30bb
+index 0000000..ed2f30b
 --- /dev/null
 +++ b/loader/vulkan_own.pc.in
 @@ -0,0 +1,11 @@
