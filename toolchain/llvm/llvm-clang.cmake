@@ -15,8 +15,6 @@ ExternalProject_Add(llvm-clang
 )
 
 ExternalProject_Add(llvm-copy-builtin
-    DEPENDS
-        llvm-compiler-rt-builtin
     DOWNLOAD_COMMAND ""
     SOURCE_DIR ${SOURCE_LOCATION}
     UPDATE_COMMAND ""
