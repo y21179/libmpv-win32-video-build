@@ -3,6 +3,7 @@ ExternalProject_Add(angle-headers
     SOURCE_DIR ${SOURCE_LOCATION}
     GIT_REMOTE_NAME origin
     GIT_TAG main
+    GIT_RESET 0cb8023c01f92b29f3738ea7472d06f8f059ed84 # before ANGLE dropped the D3D9 backend; mpv 0.38 still uses EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE
     GIT_CLONE_FLAGS "--sparse --filter=tree:0"
     GIT_CLONE_POST_COMMAND "sparse-checkout set include/EGL include/KHR"
     GIT_SUBMODULES ""
