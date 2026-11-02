@@ -1,7 +1,7 @@
-From 783da283864a7423cb30563176eac6f20445dcc7 Mon Sep 17 00:00:00 2001
+From 4d9467292e899ffb0f2972b36a78777dbae5f920 Mon Sep 17 00:00:00 2001
 From: Zhong Lufan <lufanzhong@gmail.com>
-Date: Fri, 7 Oct 2022 21:17:09 +0800
-Subject: [PATCH] Do not use dirent.h
+Date: Mon, 2 Nov 2026 12:13:36 +0800
+Subject: [PATCH 2/2] Do not use dirent.h
 
 Because this causes some quirks on some partitions on Windows.
 ---
@@ -9,17 +9,17 @@ Because this causes some quirks on some partitions on Windows.
  1 file changed, 1 deletion(-)
 
 diff --git a/meson.build b/meson.build
-index a9ec544..1bd807e 100644
+index bbfc5237..768e6f67 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -47,7 +47,6 @@ pkgmod = import('pkgconfig')
- python3 = import('python').find_installation()
+@@ -126,7 +126,6 @@ python3 = import('python').find_installation()
+ pytest = find_program('pytest', required: false)
  
  check_headers = [
 -  ['dirent.h'],
+   ['dlfcn.h'],
    ['fcntl.h'],
-   ['stdlib.h'],
-   ['string.h'],
+   ['inttypes.h'],
 -- 
-2.38.0
+2.52.0.windows.1
 
